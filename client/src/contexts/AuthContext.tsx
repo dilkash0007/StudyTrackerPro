@@ -1,14 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  fullName?: string;
-  profilePicture?: string;
-}
+import { authService } from "@/services/localStorage";
+import { User } from "@/types";
 
 interface AuthContextType {
   user: User | null;
@@ -29,37 +22,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for token in local storage
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) {
-      setToken(storedToken);
-      fetchUser(storedToken);
-    } else {
-      setIsLoading(false);
-    }
+    // Check for user on initial load
+    fetchCurrentUser();
   }, []);
 
-  const fetchUser = async (authToken: string) => {
+  const fetchCurrentUser = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
+      const userData = await authService.getUser();
+      if (userData) {
         setUser(userData);
-      } else {
-        // Token invalid, clear it
-        localStorage.removeItem("token");
-        setToken(null);
+        // We don't need to set token here as it's managed by the localStorage service
       }
     } catch (error) {
       console.error("Error fetching user:", error);
-      localStorage.removeItem("token");
-      setToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -68,18 +44,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await apiRequest("POST", "/api/auth/login", { email, password });
-      
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
-        setUser(data.user);
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${data.user.username}!`,
-        });
-      }
+      const result = await authService.login(email, password);
+      setUser(result.user);
+      setToken(result.token);
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${result.user.username}!`,
+      });
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -115,18 +86,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (username: string, email: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await apiRequest("POST", "/api/auth/register", { username, email, password });
-      
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
-        setUser(data.user);
-        toast({
-          title: "Registration successful",
-          description: "Your account has been created",
-        });
-      }
+      const result = await authService.register(username, email, password);
+      setUser(result.user);
+      setToken(result.token);
+      toast({
+        title: "Registration successful",
+        description: "Your account has been created",
+      });
     } catch (error: any) {
       toast({
         title: "Registration failed",
@@ -139,14 +105,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setUser(null);
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setToken(null);
+      setUser(null);
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   return (

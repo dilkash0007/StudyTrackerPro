@@ -1,44 +1,40 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
-
+// This is a mock API request function
+// It will be replaced with direct calls to our localStorage services
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  // Create a mock response
+  const mockResponse = {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: () => Promise.resolve(data || {}),
+    text: () => Promise.resolve(JSON.stringify(data || {})),
+  } as Response;
+  
+  console.log(`Mock API ${method} request to ${url}`, data);
+  
+  // Return the mock response
+  return Promise.resolve(mockResponse);
 }
 
+// This is a mock query function
+// Components will use our localStorage services directly instead
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
+  () =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
+    // Log the query for debugging
+    console.log(`Mock query for ${queryKey[0]}`);
+    
+    // Return empty data (components will use localStorage services)
+    return {} as T;
   };
 
 export const queryClient = new QueryClient({
