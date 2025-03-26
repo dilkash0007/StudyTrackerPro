@@ -1,7 +1,7 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import { useAuth } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
@@ -16,12 +16,12 @@ import ProfilePage from "@/pages/profile/ProfilePage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import { Loader2 } from "lucide-react";
 
-// AuthCheck is a separate component that handles auth logic
-function AuthCheck({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
+// A wrapper that checks auth state
+function ProtectedRoute(props: { component: React.ComponentType }) {
+  const { component: Component } = props;
+  const auth = useAuth();
   
-  if (isLoading) {
+  if (auth.isLoading) {
     return (
       <div className="flex items-center justify-center w-full h-screen">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
@@ -29,105 +29,87 @@ function AuthCheck({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if (!user) {
-    navigate("/login");
-    return null;
+  if (!auth.user) {
+    return <Redirect to="/login" />;
   }
   
-  return <>{children}</>;
+  return <Component />;
 }
 
-function App() {
+// Create public routes that don't require authentication
+function PublicRoute(props: { component: React.ComponentType }) {
+  const { component: Component } = props;
+  return <Component />;
+}
+
+// Main App component
+function AppContent() {
   return (
     <>
       <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
+        <Route path="/login">
+          <PublicRoute component={Login} />
+        </Route>
+        
+        <Route path="/register">
+          <PublicRoute component={Register} />
+        </Route>
         
         <Route path="/">
-          {() => (
-            <AuthCheck>
-              <Dashboard />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={Dashboard} />
         </Route>
         
         <Route path="/pomodoro">
-          {() => (
-            <AuthCheck>
-              <PomodoroPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={PomodoroPage} />
         </Route>
         
         <Route path="/calendar">
-          {() => (
-            <AuthCheck>
-              <CalendarPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={CalendarPage} />
         </Route>
         
         <Route path="/books">
-          {() => (
-            <AuthCheck>
-              <BooksPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={BooksPage} />
         </Route>
         
         <Route path="/statistics">
-          {() => (
-            <AuthCheck>
-              <StatisticsPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={StatisticsPage} />
         </Route>
         
         <Route path="/notes">
-          {() => (
-            <AuthCheck>
-              <NotesPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={NotesPage} />
         </Route>
         
         <Route path="/flashcards">
-          {() => (
-            <AuthCheck>
-              <FlashcardsPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={FlashcardsPage} />
         </Route>
         
         <Route path="/community">
-          {() => (
-            <AuthCheck>
-              <CommunityPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={CommunityPage} />
         </Route>
         
         <Route path="/profile">
-          {() => (
-            <AuthCheck>
-              <ProfilePage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={ProfilePage} />
         </Route>
         
         <Route path="/settings">
-          {() => (
-            <AuthCheck>
-              <SettingsPage />
-            </AuthCheck>
-          )}
+          <ProtectedRoute component={SettingsPage} />
         </Route>
         
-        <Route component={NotFound} />
+        <Route>
+          <NotFound />
+        </Route>
       </Switch>
       <Toaster />
     </>
+  );
+}
+
+// Wrap AppContent with our own AuthProvider to ensure it's always present
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
