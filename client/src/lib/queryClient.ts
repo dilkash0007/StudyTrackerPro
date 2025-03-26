@@ -25,16 +25,15 @@ export async function apiRequest(
 // This is a mock query function
 // Components will use our localStorage services directly instead
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+export const getQueryFn = <TData>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  () =>
+}): QueryFunction<TData> => 
   async ({ queryKey }) => {
     // Log the query for debugging
     console.log(`Mock query for ${queryKey[0]}`);
     
     // Return empty data (components will use localStorage services)
-    return {} as T;
+    return {} as TData;
   };
 
 export const queryClient = new QueryClient({
