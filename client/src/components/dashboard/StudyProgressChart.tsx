@@ -1,14 +1,34 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import { format, startOfWeek, addDays, eachDayOfInterval } from "date-fns";
 import { StudySession } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+import { studySessionService } from "@/services/localStorage";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function StudyProgressChart() {
-  const { data: studySessions, isLoading } = useQuery<StudySession[]>({
-    queryKey: ["/api/study-sessions"],
-  });
+  const [studySessions, setStudySessions] = useState<StudySession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  // Fetch study sessions from localStorage service
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        try {
+          const sessions = await studySessionService.getStudySessions(user.id);
+          setStudySessions(sessions);
+        } catch (error) {
+          console.error("Error fetching study sessions:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   // State for the time period filter
   const activePeriod = "Day"; // Could be enhanced with useState

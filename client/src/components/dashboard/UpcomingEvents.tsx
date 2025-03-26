@@ -1,16 +1,36 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import { Event } from "@/types";
 import { format, isSameDay, addDays } from "date-fns";
 import { Clock, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { eventService } from "@/services/localStorage";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function UpcomingEvents() {
-  const { data: events, isLoading } = useQuery<Event[]>({
-    queryKey: ["/api/events"],
-  });
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  // Fetch events from localStorage service
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        try {
+          const fetchedEvents = await eventService.getEvents(user.id);
+          setEvents(fetchedEvents);
+        } catch (error) {
+          console.error("Error fetching events:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   // Filter and sort events to get upcoming ones
   const getUpcomingEvents = () => {

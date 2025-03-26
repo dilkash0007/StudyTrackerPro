@@ -10,6 +10,18 @@ import {
   Settings
 } from '@/types';
 
+import {
+  sampleUser,
+  sampleTasks,
+  sampleStudySessions,
+  sampleEvents,
+  sampleBooks,
+  sampleNotes,
+  sampleFlashcardDecks,
+  sampleFlashcards,
+  sampleSettings
+} from './sampleData';
+
 // Keys for localStorage
 const KEYS = {
   USER: 'study_app_user',
@@ -23,6 +35,53 @@ const KEYS = {
   SETTINGS: 'study_app_settings',
   AUTH_TOKEN: 'study_app_auth_token'
 };
+
+// Initialize local storage with sample data if it doesn't exist
+const initializeLocalStorage = () => {
+  if (!localStorage.getItem(KEYS.USER)) {
+    localStorage.setItem(KEYS.USER, JSON.stringify([sampleUser]));
+  }
+  
+  if (!localStorage.getItem(KEYS.TASKS)) {
+    localStorage.setItem(KEYS.TASKS, JSON.stringify(sampleTasks));
+  }
+  
+  if (!localStorage.getItem(KEYS.STUDY_SESSIONS)) {
+    localStorage.setItem(KEYS.STUDY_SESSIONS, JSON.stringify(sampleStudySessions));
+  }
+  
+  if (!localStorage.getItem(KEYS.EVENTS)) {
+    localStorage.setItem(KEYS.EVENTS, JSON.stringify(sampleEvents));
+  }
+  
+  if (!localStorage.getItem(KEYS.BOOKS)) {
+    localStorage.setItem(KEYS.BOOKS, JSON.stringify(sampleBooks));
+  }
+  
+  if (!localStorage.getItem(KEYS.NOTES)) {
+    localStorage.setItem(KEYS.NOTES, JSON.stringify(sampleNotes));
+  }
+  
+  if (!localStorage.getItem(KEYS.FLASHCARD_DECKS)) {
+    localStorage.setItem(KEYS.FLASHCARD_DECKS, JSON.stringify(sampleFlashcardDecks));
+  }
+  
+  if (!localStorage.getItem(KEYS.FLASHCARDS)) {
+    localStorage.setItem(KEYS.FLASHCARDS, JSON.stringify(sampleFlashcards));
+  }
+  
+  if (!localStorage.getItem(KEYS.SETTINGS)) {
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify([sampleSettings]));
+  }
+  
+  // Set a fake auth token for the sample user to auto-login
+  if (!localStorage.getItem(KEYS.AUTH_TOKEN)) {
+    localStorage.setItem(KEYS.AUTH_TOKEN, 'sample-auth-token-123');
+  }
+};
+
+// Run initialization when the file is imported
+initializeLocalStorage();
 
 // Helper functions
 const getItem = <T>(key: string, defaultValue: T): T => {
