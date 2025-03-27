@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "dist/public",
   "builds": [
     {
       "src": "client/package.json",
@@ -14,5 +17,9 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "server/index.ts" },
     { "src": "/(.*)", "dest": "client/dist/public/$1" }
-  ]
+  ],
+  "github": {
+    "silent": false,
+    "autoJobCancellation": true
+  }
 }
