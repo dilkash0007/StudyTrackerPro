@@ -4,48 +4,81 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { StudySession, Task, Stats } from "@/types";
-import { format, startOfWeek, startOfMonth, addDays, addMonths, subMonths, eachDayOfInterval } from "date-fns";
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  format,
+  startOfWeek,
+  startOfMonth,
+  addDays,
+  addMonths,
+  subMonths,
+  eachDayOfInterval,
+} from "date-fns";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
-import { BookOpen, Clock, CheckSquare, Target, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  BookOpen,
+  Clock,
+  CheckSquare,
+  Target,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  NeuralDots,
+  NeuralBackgroundDecoration,
+  NeuralCard,
+  NeuralCardHeader,
+} from "@/components/ui/NeuralDesignElements";
+import { Loader2 } from "lucide-react";
 
 export default function StatisticsPage() {
   const [dateRange, setDateRange] = useState<"week" | "month" | "year">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [focusCategory, setFocusCategory] = useState<"subject" | "time-of-day" | "productivity">("subject");
-  
+  const [focusCategory, setFocusCategory] = useState<
+    "subject" | "time-of-day" | "productivity"
+  >("subject");
+
   // Stats data
   const { data: stats, isLoading: statsLoading } = useQuery<Stats>({
     queryKey: ["/api/study-sessions/stats"],
   });
-  
+
   // Study sessions data
-  const { data: studySessions, isLoading: sessionsLoading } = useQuery<StudySession[]>({
+  const { data: studySessions, isLoading: sessionsLoading } = useQuery<
+    StudySession[]
+  >({
     queryKey: ["/api/study-sessions"],
   });
-  
+
   // Tasks data
   const { data: tasks, isLoading: tasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
-  
+
   // Helper functions for date manipulation
   const getDateRange = () => {
     if (dateRange === "week") {
@@ -53,15 +86,26 @@ export default function StatisticsPage() {
       return {
         start,
         end: addDays(start, 6),
-        label: `${format(start, 'MMM d')} - ${format(addDays(start, 6), 'MMM d, yyyy')}`
+        label: `${format(start, "MMM d")} - ${format(
+          addDays(start, 6),
+          "MMM d, yyyy"
+        )}`,
       };
     } else if (dateRange === "month") {
-      const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const start = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const end = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
       return {
         start,
         end,
-        label: format(start, 'MMMM yyyy')
+        label: format(start, "MMMM yyyy"),
       };
     } else {
       const start = new Date(currentDate.getFullYear(), 0, 1);
@@ -69,381 +113,391 @@ export default function StatisticsPage() {
       return {
         start,
         end,
-        label: format(start, 'yyyy')
+        label: format(start, "yyyy"),
       };
     }
   };
-  
+
   const moveDateRangeBack = () => {
     if (dateRange === "week") {
-      setCurrentDate(prevDate => addDays(prevDate, -7));
+      setCurrentDate((prevDate) => addDays(prevDate, -7));
     } else if (dateRange === "month") {
-      setCurrentDate(prevDate => subMonths(prevDate, 1));
+      setCurrentDate((prevDate) => subMonths(prevDate, 1));
     } else {
-      setCurrentDate(prevDate => new Date(prevDate.getFullYear() - 1, prevDate.getMonth(), prevDate.getDate()));
+      setCurrentDate(
+        (prevDate) =>
+          new Date(
+            prevDate.getFullYear() - 1,
+            prevDate.getMonth(),
+            prevDate.getDate()
+          )
+      );
     }
   };
-  
+
   const moveDateRangeForward = () => {
     if (dateRange === "week") {
-      setCurrentDate(prevDate => addDays(prevDate, 7));
+      setCurrentDate((prevDate) => addDays(prevDate, 7));
     } else if (dateRange === "month") {
-      setCurrentDate(prevDate => addMonths(prevDate, 1));
+      setCurrentDate((prevDate) => addMonths(prevDate, 1));
     } else {
-      setCurrentDate(prevDate => new Date(prevDate.getFullYear() + 1, prevDate.getMonth(), prevDate.getDate()));
+      setCurrentDate(
+        (prevDate) =>
+          new Date(
+            prevDate.getFullYear() + 1,
+            prevDate.getMonth(),
+            prevDate.getDate()
+          )
+      );
     }
   };
-  
+
   const range = getDateRange();
-  
+
   // Data processing functions
   const getStudyHoursByDay = () => {
     if (!studySessions || studySessions.length === 0) {
       return [];
     }
-    
+
     const days = eachDayOfInterval({ start: range.start, end: range.end });
-    
-    const data = days.map(day => {
-      const sessionsOnDay = studySessions.filter(session => {
+
+    // Ensure studySessions is an array
+    const sessionsArray = Array.isArray(studySessions) ? studySessions : [];
+
+    const data = days.map((day) => {
+      const sessionsOnDay = sessionsArray.filter((session) => {
         const sessionDate = new Date(session.startTime);
-        return format(sessionDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+        return format(sessionDate, "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
       });
-      
+
       const totalHours = sessionsOnDay.reduce((sum, session) => {
         return sum + (session.duration || 0) / 60; // Convert minutes to hours
       }, 0);
-      
+
       return {
-        date: format(day, dateRange === "week" ? 'EEE' : 'MMM dd'),
-        hours: parseFloat(totalHours.toFixed(1))
+        date: format(day, dateRange === "week" ? "EEE" : "MMM dd"),
+        hours: parseFloat(totalHours.toFixed(1)),
       };
     });
-    
+
     return data;
   };
-  
+
   const getStudyHoursBySubject = () => {
     if (!studySessions || studySessions.length === 0) {
       return [];
     }
-    
-    const sessionsInRange = studySessions.filter(session => {
+
+    // Ensure studySessions is an array
+    const sessionsArray = Array.isArray(studySessions) ? studySessions : [];
+
+    const sessionsInRange = sessionsArray.filter((session) => {
       const sessionDate = new Date(session.startTime);
       return sessionDate >= range.start && sessionDate <= range.end;
     });
-    
+
     const subjectMap = new Map<string, number>();
-    
-    sessionsInRange.forEach(session => {
-      const subject = session.subject || 'Unspecified';
+
+    sessionsInRange.forEach((session) => {
+      const subject = session.subject || "Unspecified";
       const hours = (session.duration || 0) / 60;
       subjectMap.set(subject, (subjectMap.get(subject) || 0) + hours);
     });
-    
-    return Array.from(subjectMap).map(([subject, hours]) => ({
-      subject,
-      hours: parseFloat(hours.toFixed(1))
-    })).sort((a, b) => b.hours - a.hours);
+
+    return Array.from(subjectMap)
+      .map(([subject, hours]) => ({
+        subject,
+        hours: parseFloat(hours.toFixed(1)),
+      }))
+      .sort((a, b) => b.hours - a.hours);
   };
-  
+
   const getTasksCompletionRate = () => {
     if (!tasks || tasks.length === 0) {
       return { completed: 0, incomplete: 0 };
     }
-    
-    const tasksInRange = tasks.filter(task => {
+
+    // Ensure tasks is an array
+    const tasksArray = Array.isArray(tasks) ? tasks : [];
+
+    const tasksInRange = tasksArray.filter((task) => {
       if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       return dueDate >= range.start && dueDate <= range.end;
     });
-    
-    const completed = tasksInRange.filter(task => task.completed).length;
+
+    const completed = tasksInRange.filter((task) => task.completed).length;
     const incomplete = tasksInRange.length - completed;
-    
+
     return {
       completed,
       incomplete,
-      completionRate: tasksInRange.length > 0 ? (completed / tasksInRange.length * 100).toFixed(0) : "0"
+      completionRate:
+        tasksInRange.length > 0
+          ? ((completed / tasksInRange.length) * 100).toFixed(0)
+          : "0",
     };
   };
-  
+
   const studyHoursByDay = getStudyHoursByDay();
   const studyHoursBySubject = getStudyHoursBySubject();
   const taskStats = getTasksCompletionRate();
-  
+
   // Colors for charts
-  const COLORS = ['#4F46E5', '#10B981', '#F97316', '#EF4444', '#8B5CF6', '#06B6D4', '#F59E0B'];
-  
-  const isLoading = statsLoading || sessionsLoading || tasksLoading;
+  const COLORS = [
+    "#4F46E5",
+    "#10B981",
+    "#F97316",
+    "#EF4444",
+    "#8B5CF6",
+    "#06B6D4",
+    "#F59E0B",
+  ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen bg-gray-900 text-gray-100">
       <Sidebar />
-      
-      <div className="flex flex-col flex-1 w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <NeuralBackgroundDecoration />
+
+        <div className="absolute top-1/4 -right-24 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 -left-24 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl"></div>
+
         <MobileHeader />
-        
-        <main className="relative flex-1 overflow-y-auto focus:outline-none">
-          <div className="py-6 mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-            <h2 className="text-2xl font-bold leading-7 text-gray-800 sm:text-3xl sm:leading-9 sm:truncate mb-6">
-              Statistics
-            </h2>
-            
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 mb-8">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-md bg-primary-50 text-primary">
-                      <Clock className="w-5 h-5" />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 z-10">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col mb-6">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-300 to-cyan-300 text-transparent bg-clip-text">
+                Statistics
+              </h1>
+              <p className="text-gray-400">
+                Track your study progress and performance
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              {/* Stats cards with neural styling */}
+              <Card className="relative overflow-hidden backdrop-blur-sm bg-gray-900/50 border-teal-500/30">
+                <NeuralDots
+                  className="absolute top-0 right-0 w-24 h-24 opacity-10"
+                  count={3}
+                />
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Total Study Hours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {statsLoading ? (
+                    <Skeleton className="h-6 w-20 bg-gray-800" />
+                  ) : (
+                    <div className="text-2xl font-bold text-teal-400">
+                      {stats?.totalHours || 0}
                     </div>
-                    <div className="ml-5">
-                      <p className="text-sm font-medium text-gray-500">Total Study Hours</p>
-                      {isLoading ? (
-                        <Skeleton className="h-7 w-16 mt-1" />
-                      ) : (
-                        <p className="text-2xl font-semibold text-gray-900">{stats?.studyHours || "0"}</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-md bg-green-50 text-green-500">
-                      <CheckSquare className="w-5 h-5" />
+
+              <Card className="relative overflow-hidden backdrop-blur-sm bg-gray-900/50 border-teal-500/30">
+                <NeuralDots
+                  className="absolute top-0 right-0 w-24 h-24 opacity-10"
+                  count={3}
+                />
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Study Sessions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {statsLoading ? (
+                    <Skeleton className="h-6 w-20 bg-gray-800" />
+                  ) : (
+                    <div className="text-2xl font-bold text-cyan-400">
+                      {stats?.totalSessions || 0}
                     </div>
-                    <div className="ml-5">
-                      <p className="text-sm font-medium text-gray-500">Tasks Completed</p>
-                      {isLoading ? (
-                        <Skeleton className="h-7 w-16 mt-1" />
-                      ) : (
-                        <p className="text-2xl font-semibold text-gray-900">{stats?.tasksCompleted || 0}</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-md bg-yellow-50 text-yellow-500">
-                      <Target className="w-5 h-5" />
+
+              <Card className="relative overflow-hidden backdrop-blur-sm bg-gray-900/50 border-teal-500/30">
+                <NeuralDots
+                  className="absolute top-0 right-0 w-24 h-24 opacity-10"
+                  count={3}
+                />
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Tasks Completed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {tasksLoading ? (
+                    <Skeleton className="h-6 w-20 bg-gray-800" />
+                  ) : (
+                    <div className="text-2xl font-bold text-emerald-400">
+                      {taskStats.completed}
                     </div>
-                    <div className="ml-5">
-                      <p className="text-sm font-medium text-gray-500">Focus Score</p>
-                      {isLoading ? (
-                        <Skeleton className="h-7 w-16 mt-1" />
-                      ) : (
-                        <p className="text-2xl font-semibold text-gray-900">{stats?.focusScore || "0%"}</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-md bg-red-50 text-red-500">
-                      <Calendar className="w-5 h-5" />
+
+              <Card className="relative overflow-hidden backdrop-blur-sm bg-gray-900/50 border-teal-500/30">
+                <NeuralDots
+                  className="absolute top-0 right-0 w-24 h-24 opacity-10"
+                  count={3}
+                />
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Completion Rate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {tasksLoading ? (
+                    <Skeleton className="h-6 w-20 bg-gray-800" />
+                  ) : (
+                    <div className="text-2xl font-bold text-teal-400">
+                      {taskStats.completionRate}%
                     </div>
-                    <div className="ml-5">
-                      <p className="text-sm font-medium text-gray-500">Current Streak</p>
-                      {isLoading ? (
-                        <Skeleton className="h-7 w-16 mt-1" />
-                      ) : (
-                        <p className="text-2xl font-semibold text-gray-900">{stats?.streak || "0 days"}</p>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
-            
-            {/* Date Range Controls */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex space-x-4 items-center">
-                <TabsList>
-                  <TabsTrigger 
-                    value="week" 
-                    onClick={() => setDateRange("week")}
-                    className={dateRange === "week" ? "bg-primary text-white" : ""}
+
+            <div className="grid grid-cols-1 gap-6">
+              <Tabs defaultValue="study-time" className="w-full">
+                <TabsList className="mb-4 bg-gray-800/50 border border-teal-500/20">
+                  <TabsTrigger
+                    value="study-time"
+                    className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-300"
                   >
-                    Week
+                    Study Time
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="month" 
-                    onClick={() => setDateRange("month")}
-                    className={dateRange === "month" ? "bg-primary text-white" : ""}
+                  <TabsTrigger
+                    value="tasks"
+                    className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-300"
                   >
-                    Month
+                    Tasks
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="year" 
-                    onClick={() => setDateRange("year")}
-                    className={dateRange === "year" ? "bg-primary text-white" : ""}
+                  <TabsTrigger
+                    value="subjects"
+                    className="data-[state=active]:bg-teal-500/20 data-[state=active]:text-teal-300"
                   >
-                    Year
+                    Subjects
                   </TabsTrigger>
                 </TabsList>
-                
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="icon" onClick={moveDateRangeBack}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium">{range.label}</span>
-                  <Button variant="outline" size="icon" onClick={moveDateRangeForward}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Study Hours</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <Skeleton className="h-72 w-full" />
-                  ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={studyHoursByDay} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`${value} hours`, 'Study Time']} />
-                        <Bar dataKey="hours" fill="#4F46E5" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>Focus Distribution</CardTitle>
-                    <Select value={focusCategory} onValueChange={(val: any) => setFocusCategory(val)}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="subject">By Subject</SelectItem>
-                        <SelectItem value="time-of-day">By Time of Day</SelectItem>
-                        <SelectItem value="productivity">By Productivity</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <Skeleton className="h-72 w-full" />
-                  ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={studyHoursBySubject}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="hours"
-                          nameKey="subject"
+                {/* Content for tabs - update with neural styled cards */}
+                <TabsContent value="study-time">
+                  <Card className="relative overflow-hidden backdrop-blur-sm bg-gray-900/50 border-teal-500/30">
+                    <NeuralDots className="absolute top-0 right-0 w-32 h-32 opacity-10" />
+                    <NeuralDots
+                      className="absolute bottom-0 left-0 w-24 h-24 opacity-5"
+                      count={3}
+                    />
+
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl bg-gradient-to-r from-teal-300 to-cyan-300 text-transparent bg-clip-text">
+                          Study Hours
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={moveDateRangeBack}
+                          className="h-8 w-8 border-teal-500/30 hover:bg-teal-900/20 text-gray-300"
                         >
-                          {studyHoursBySubject.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value} hours`, 'Study Time']} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Study Trends</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <Skeleton className="h-72 w-full" />
-                  ) : (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={studyHoursByDay} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`${value} hours`, 'Study Time']} />
-                        <Legend />
-                        <Line type="monotone" dataKey="hours" stroke="#4F46E5" activeDot={{ r: 8 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Task Completion</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <Skeleton className="h-72 w-full" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <div className="relative h-40 w-40">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Completed', value: taskStats.completed },
-                                { name: 'Incomplete', value: taskStats.incomplete }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={40}
-                              outerRadius={60}
-                              fill="#8884d8"
-                              dataKey="value"
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={moveDateRangeForward}
+                          className="h-8 w-8 border-teal-500/30 hover:bg-teal-900/20 text-gray-300"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Select
+                          value={dateRange}
+                          onValueChange={(value) =>
+                            setDateRange(value as "week" | "month" | "year")
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-[90px] border-teal-500/30 bg-gray-900/30 text-gray-300">
+                            <SelectValue placeholder="Select range" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-900 border-teal-500/30">
+                            <SelectItem value="week">Week</SelectItem>
+                            <SelectItem value="month">Month</SelectItem>
+                            <SelectItem value="year">Year</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-2 text-sm text-gray-400 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          <span>{range.label}</span>
+                        </div>
+                      </div>
+                      {sessionsLoading ? (
+                        <div className="h-[300px] flex items-center justify-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+                        </div>
+                      ) : studyHoursByDay.length === 0 ? (
+                        <div className="h-[300px] flex items-center justify-center text-gray-400">
+                          No study data for this period
+                        </div>
+                      ) : (
+                        <div className="h-[300px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              data={studyHoursByDay}
+                              margin={{
+                                top: 20,
+                                right: 30,
+                                left: 0,
+                                bottom: 5,
+                              }}
                             >
-                              <Cell fill="#10B981" />
-                              <Cell fill="#EF4444" />
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <p className="text-3xl font-bold">{taskStats.completionRate}%</p>
-                          <p className="text-xs text-gray-500">Completion</p>
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#2D3748"
+                                vertical={false}
+                              />
+                              <XAxis
+                                dataKey="date"
+                                stroke="#718096"
+                                tick={{ fill: "#718096" }}
+                              />
+                              <YAxis
+                                stroke="#718096"
+                                tick={{ fill: "#718096" }}
+                              />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "#1A202C",
+                                  borderColor: "#2D3748",
+                                  color: "#E2E8F0",
+                                }}
+                                cursor={{ fill: "rgba(45, 55, 72, 0.2)" }}
+                              />
+                              <Bar
+                                dataKey="hours"
+                                fill="#2DD4BF"
+                                radius={[4, 4, 0, 0]}
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
                         </div>
-                      </div>
-                      
-                      <div className="mt-6 grid grid-cols-2 gap-4 w-full">
-                        <div className="text-center">
-                          <p className="text-sm text-gray-500">Completed</p>
-                          <p className="text-xl font-medium text-green-600">{taskStats.completed}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-gray-500">Pending</p>
-                          <p className="text-xl font-medium text-red-600">{taskStats.incomplete}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                {/* ... Keep remaining tabs content with same styling ... */}
+                // ... existing code ...
+              </Tabs>
             </div>
           </div>
         </main>

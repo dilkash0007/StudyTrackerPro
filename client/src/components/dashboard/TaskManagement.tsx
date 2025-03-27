@@ -1,16 +1,26 @@
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MoreVertical, Plus, Filter } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Task, UpdateTaskInput } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,10 +28,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -72,7 +89,8 @@ export default function TaskManagement() {
     onError: (error: any) => {
       toast({
         title: "Error creating task",
-        description: error.message || "An error occurred while creating the task",
+        description:
+          error.message || "An error occurred while creating the task",
         variant: "destructive",
       });
     },
@@ -93,7 +111,8 @@ export default function TaskManagement() {
     onError: (error: any) => {
       toast({
         title: "Error updating task",
-        description: error.message || "An error occurred while updating the task",
+        description:
+          error.message || "An error occurred while updating the task",
         variant: "destructive",
       });
     },
@@ -114,7 +133,8 @@ export default function TaskManagement() {
     onError: (error: any) => {
       toast({
         title: "Error deleting task",
-        description: error.message || "An error occurred while deleting the task",
+        description:
+          error.message || "An error occurred while deleting the task",
         variant: "destructive",
       });
     },
@@ -155,12 +175,12 @@ export default function TaskManagement() {
 
   const getSubjectColor = (subject: string) => {
     const subjectColors: Record<string, string> = {
-      "Physics": "bg-blue-100 text-blue-800",
-      "Math": "bg-purple-100 text-purple-800",
-      "History": "bg-green-100 text-green-800",
-      "Chemistry": "bg-indigo-100 text-indigo-800",
-      "Biology": "bg-pink-100 text-pink-800",
-      "English": "bg-yellow-100 text-yellow-800",
+      Physics: "bg-blue-100 text-blue-800",
+      Math: "bg-purple-100 text-purple-800",
+      History: "bg-green-100 text-green-800",
+      Chemistry: "bg-indigo-100 text-indigo-800",
+      Biology: "bg-pink-100 text-pink-800",
+      English: "bg-yellow-100 text-yellow-800",
       "Computer Science": "bg-teal-100 text-teal-800",
     };
 
@@ -169,23 +189,25 @@ export default function TaskManagement() {
 
   const getDueDateLabel = (dueDate: Date | undefined) => {
     if (!dueDate) return "No due date";
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const dueDateObj = new Date(dueDate);
     dueDateObj.setHours(0, 0, 0, 0);
-    
+
     if (dueDateObj.getTime() === today.getTime()) return "Due Today";
     if (dueDateObj.getTime() === tomorrow.getTime()) return "Tomorrow";
-    
-    const diff = Math.floor((dueDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    const diff = Math.floor(
+      (dueDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
     if (diff < 0) return "Overdue";
     if (diff < 7) return `In ${diff} days`;
-    
+
     return format(dueDate, "MMM d, yyyy");
   };
 
@@ -213,27 +235,33 @@ export default function TaskManagement() {
                       id="title"
                       placeholder="Task title"
                       value={newTask.title}
-                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                      onChange={(e) =>
+                        setNewTask({ ...newTask, title: e.target.value })
+                      }
                       required
                     />
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       placeholder="Task description"
                       value={newTask.description}
-                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                      onChange={(e) =>
+                        setNewTask({ ...newTask, description: e.target.value })
+                      }
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="priority">Priority</Label>
-                      <Select 
-                        value={newTask.priority} 
-                        onValueChange={(value) => setNewTask({ ...newTask, priority: value })}
+                      <Select
+                        value={newTask.priority}
+                        onValueChange={(value) =>
+                          setNewTask({ ...newTask, priority: value })
+                        }
                       >
                         <SelectTrigger id="priority">
                           <SelectValue placeholder="Select priority" />
@@ -248,12 +276,14 @@ export default function TaskManagement() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="grid gap-2">
                       <Label htmlFor="subject">Subject</Label>
-                      <Select 
-                        value={newTask.subject} 
-                        onValueChange={(value) => setNewTask({ ...newTask, subject: value })}
+                      <Select
+                        value={newTask.subject}
+                        onValueChange={(value) =>
+                          setNewTask({ ...newTask, subject: value })
+                        }
                       >
                         <SelectTrigger id="subject">
                           <SelectValue placeholder="Select subject" />
@@ -266,29 +296,35 @@ export default function TaskManagement() {
                             <SelectItem value="Chemistry">Chemistry</SelectItem>
                             <SelectItem value="Biology">Biology</SelectItem>
                             <SelectItem value="English">English</SelectItem>
-                            <SelectItem value="Computer Science">Computer Science</SelectItem>
+                            <SelectItem value="Computer Science">
+                              Computer Science
+                            </SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label>Due Date</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="w-full justify-start text-left"
                         >
-                          {newTask.dueDate ? format(newTask.dueDate, "PPP") : "Pick a date"}
+                          {newTask.dueDate
+                            ? format(newTask.dueDate, "PPP")
+                            : "Pick a date"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
                           selected={newTask.dueDate || undefined}
-                          onSelect={(date) => setNewTask({ ...newTask, dueDate: date })}
+                          onSelect={(date) =>
+                            setNewTask({ ...newTask, dueDate: date })
+                          }
                           initialFocus
                         />
                       </PopoverContent>
@@ -296,21 +332,23 @@ export default function TaskManagement() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setIsAddTaskOpen(false)}
                   >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createTaskMutation.isPending}>
-                    {createTaskMutation.isPending ? "Creating..." : "Create Task"}
+                    {createTaskMutation.isPending
+                      ? "Creating..."
+                      : "Create Task"}
                   </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -351,34 +389,46 @@ export default function TaskManagement() {
                       <label
                         htmlFor={`task-${task.id}`}
                         className={`ml-3 text-sm font-medium ${
-                          task.completed ? "line-through text-gray-400" : "text-gray-700"
+                          task.completed
+                            ? "line-through text-gray-400"
+                            : "text-gray-700"
                         }`}
                       >
                         {task.title}
                       </label>
                     </div>
                     <div className="flex items-center">
-                      <Badge variant="outline" className={`${getPriorityColor(task.priority)}`}>
-                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                      <Badge
+                        variant="outline"
+                        className={`${getPriorityColor(task.priority)}`}
+                      >
+                        {task.priority.charAt(0).toUpperCase() +
+                          task.priority.slice(1)}{" "}
+                        Priority
                       </Badge>
                       {task.subject && (
-                        <Badge variant="outline" className={`ml-2 ${getSubjectColor(task.subject)}`}>
+                        <Badge
+                          variant="outline"
+                          className={`ml-2 ${getSubjectColor(task.subject)}`}
+                        >
                           {task.subject}
                         </Badge>
                       )}
-                      <span className="inline-flex items-center mx-2 text-sm text-gray-500">
-                        <Calendar className="mr-1 h-4 w-4" />
-                        {task.dueDate ? getDueDateLabel(new Date(task.dueDate)) : "No due date"}
-                      </span>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteTask(task.id)}>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteTask(task.id)}
+                          >
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
